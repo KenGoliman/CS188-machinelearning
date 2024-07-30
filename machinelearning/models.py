@@ -37,7 +37,13 @@ class PerceptronModel(Module):
         super(PerceptronModel, self).__init__()
         
         "*** YOUR CODE HERE ***"
-        self.w = None #Initialize your weights here
+        #print('check1')
+        #print([0] * dimensions)
+        #print(dimensions)
+        #print(ones(1,dimensions))
+        self.w = Parameter(ones(1,dimensions))#ones(dimensions)) #Initialize your weights here
+        #print('check2)')
+        #print(self.w)
 
     def get_weights(self):
         """
@@ -56,7 +62,10 @@ class PerceptronModel(Module):
         The pytorch function `tensordot` may be helpful here.
         """
         "*** YOUR CODE HERE ***"
-
+        #print(self.w,'suvu')
+        #print(x)
+        #print(tensordot(self.get_weights(),x))
+        return tensordot(self.get_weights(),x)
 
     def get_prediction(self, x):
         """
@@ -65,8 +74,14 @@ class PerceptronModel(Module):
         Returns: 1 or -1
         """
         "*** YOUR CODE HERE ***"
-
-
+        #print('hey')
+        #print(x)
+        score = self.run(x)
+        #print(score.item(),'here')
+        if score.item() >= 0:
+            return 1
+        else:
+            return -1
 
     def train(self, dataset):
         """
@@ -80,6 +95,7 @@ class PerceptronModel(Module):
         with no_grad():
             dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
             "*** YOUR CODE HERE ***"
+            print('sfbij')
 
 
 
