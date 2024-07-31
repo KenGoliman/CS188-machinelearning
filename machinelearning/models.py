@@ -157,9 +157,7 @@ class RegressionModel(Module):
             
         """
         "*** YOUR CODE HERE ***"
-        #print(self.parameters())
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
-        #print(len(dataloader))
         while True:
             optimizer = optim.Adam(self.parameters(), lr=0.001)
             average = 0
@@ -199,7 +197,10 @@ class DigitClassificationModel(Module):
         input_size = 28 * 28
         output_size = 10
         "*** YOUR CODE HERE ***"
-
+        self.batch_size = 100
+        self.hid_1 = Linear(input_size,input_size)
+        self.hid_2 = Linear(input_size,input_size)
+        self.hid_3 = Linear(input_size,output_size)
 
 
     def run(self, x):
@@ -217,7 +218,10 @@ class DigitClassificationModel(Module):
                 (also called logits)
         """
         """ YOUR CODE HERE """
-
+        step = relu(self.hid_1(x))
+        again = relu(self.hid_2(step))   
+        final = self.hid_3(again)
+        return final
 
     def get_loss(self, x, y):
         """
@@ -233,6 +237,9 @@ class DigitClassificationModel(Module):
         Returns: a loss tensor
         """
         """ YOUR CODE HERE """
+        prediction = self.run(x)
+        loss = cross_entropy(prediction,y)
+        return loss
 
         
 
@@ -241,7 +248,17 @@ class DigitClassificationModel(Module):
         Trains the model.
         """
         """ YOUR CODE HERE """
-
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        while True:
+            optimizer = optim.Adam(self.parameters(), lr=0.001)
+            for data in dataloader:
+                optimizer.zero_grad()
+                loss = self.get_loss(data['x'],data['label'])
+                loss.backward()
+                optimizer.step()
+            if dataset.get_validation_accuracy() >= 0.975:
+                break
+        return
 
 
 class LanguageIDModel(Module):
