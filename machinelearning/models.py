@@ -108,7 +108,7 @@ class RegressionModel(Module):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
         super().__init__()
-
+        self.prediction = Linear(1,1)#Adjust these as needed -Kennedy
 
 
     def forward(self, x):
@@ -121,6 +121,7 @@ class RegressionModel(Module):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
+        return self.prediction(x)
 
     
     def get_loss(self, x, y):
@@ -134,8 +135,9 @@ class RegressionModel(Module):
         Returns: a tensor of size 1 containing the loss
         """
         "*** YOUR CODE HERE ***"
- 
-  
+        prediction = self.forward(x)
+        loss = mse_loss(prediction,y)
+        return loss
 
     def train(self, dataset):
         """
@@ -152,9 +154,22 @@ class RegressionModel(Module):
             
         """
         "*** YOUR CODE HERE ***"
-
-
-            
+        #print(self.parameters())
+        dataloader = DataLoader(dataset, batch_size=5, shuffle=True)
+        #print(len(dataloader))
+        while True:
+            optimizer = optim.Adam(self.parameters(), lr=0.001)
+            average = 0
+            for data in dataloader:
+                optimizer.zero_grad()
+                loss = self.get_loss(data['x'],data['label'])
+                average += loss/(len(dataloader))
+                loss.backward()
+                optimizer.step()
+            print(average.item())
+            if average.item() <= 0.02:
+                break
+        return
 
 
 
