@@ -108,8 +108,9 @@ class RegressionModel(Module):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
         super().__init__()
-        self.prediction = Linear(1,1)#Adjust these as needed -Kennedy
-
+        self.batch_size = 5 #Adjust these parameters as needed -Kennedy
+        self.hid_1 = Linear(1,250)
+        self.hid_2 = Linear(250,1)
 
     def forward(self, x):
         """
@@ -121,7 +122,9 @@ class RegressionModel(Module):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
-        return self.prediction(x)
+        step = relu(self.hid_1(x))
+        again = self.hid_2(step)
+        return again
 
     
     def get_loss(self, x, y):
@@ -155,7 +158,7 @@ class RegressionModel(Module):
         """
         "*** YOUR CODE HERE ***"
         #print(self.parameters())
-        dataloader = DataLoader(dataset, batch_size=5, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
         #print(len(dataloader))
         while True:
             optimizer = optim.Adam(self.parameters(), lr=0.001)
@@ -166,8 +169,7 @@ class RegressionModel(Module):
                 average += loss/(len(dataloader))
                 loss.backward()
                 optimizer.step()
-            print(average.item())
-            if average.item() <= 0.02:
+            if average.item() <= 0.015:
                 break
         return
 
