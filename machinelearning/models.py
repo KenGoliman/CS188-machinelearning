@@ -279,7 +279,9 @@ class LanguageIDModel(Module):
         super(LanguageIDModel, self).__init__()
         "*** YOUR CODE HERE ***"
         # Initialize your model parameters here
-
+        self.batch_size = 10
+        self.init_layer = Linear(self.num_chars,len(self.languages))
+        self.hid_layer = Linear(len(self.languages),len(self.languages))
 
     def run(self, xs):
         """
@@ -311,7 +313,31 @@ class LanguageIDModel(Module):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        output = None
+        counter = 0
+        #print(len(xs))
+        #print(xs)
+        #for word in xs:
+        length = len(xs) - 1
+        while counter <= length:
+            if counter == 0 and counter == length:
+                output = self.init_layer(xs[counter])
+                counter += 1
+            elif counter == 0:
+                output = relu(self.init_layer(xs[counter]))
+                #print(output,counter,'init')
+                counter += 1
+            elif counter == length:
+                output = relu(self.init_layer(xs[counter])) + self.hid_layer(output)
+                #print(output,counter,'final')
+                counter += 1
+            else:
+                output = relu(self.init_layer(xs[counter])) + self.hid_layer(output)
+                #print(output,counter,'middle')
+                counter += 1
+        #print(output)
+        return output
+        
     
     def get_loss(self, xs, y):
         """
@@ -328,6 +354,13 @@ class LanguageIDModel(Module):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        #print('check')
+        #print(xs,y)
+        pred = self.run(xs)
+        #print(pred)
+        loss = cross_entropy(pred,y)
+        #print(loss)
+        return loss
 
 
     def train(self, dataset):
