@@ -279,9 +279,12 @@ class LanguageIDModel(Module):
         super(LanguageIDModel, self).__init__()
         "*** YOUR CODE HERE ***"
         # Initialize your model parameters here
-        self.batch_size = 10
-        self.init_layer = Linear(self.num_chars,len(self.languages))
-        self.hid_layer = Linear(len(self.languages),len(self.languages))
+        self.batch_size = 100
+        self.init_layer = Linear(self.num_chars,self.num_chars)
+        self.proc_layer = Linear(self.num_chars,self.num_chars)
+        self.hid_layer1 = Linear(self.num_chars,self.num_chars * len(self.languages))
+        self.hid_layer2 = Linear(self.num_chars * len(self.languages),self.num_chars * len(self.languages))
+        self.hid_layer3 = Linear(self.num_chars * len(self.languages),len(self.languages))
 
     def run(self, xs):
         """
@@ -315,28 +318,18 @@ class LanguageIDModel(Module):
         "*** YOUR CODE HERE ***"
         output = None
         counter = 0
-        #print(len(xs))
-        #print(xs)
-        #for word in xs:
         length = len(xs) - 1
         while counter <= length:
-            if counter == 0 and counter == length:
-                output = self.init_layer(xs[counter])
-                counter += 1
-            elif counter == 0:
+            if counter == 0:
                 output = relu(self.init_layer(xs[counter]))
-                #print(output,counter,'init')
-                counter += 1
-            elif counter == length:
-                output = relu(self.init_layer(xs[counter])) + self.hid_layer(output)
-                #print(output,counter,'final')
                 counter += 1
             else:
-                output = relu(self.init_layer(xs[counter])) + self.hid_layer(output)
-                #print(output,counter,'middle')
+                output = relu(self.init_layer(xs[counter])) + self.proc_layer(output)
                 counter += 1
-        #print(output)
-        return output
+        step = relu(self.hid_layer1(output))
+        again = relu(self.hid_layer2(step))
+        final = self.hid_layer3(again)
+        return final
         
     
     def get_loss(self, xs, y):
@@ -354,12 +347,8 @@ class LanguageIDModel(Module):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
-        #print('check')
-        #print(xs,y)
         pred = self.run(xs)
-        #print(pred)
         loss = cross_entropy(pred,y)
-        #print(loss)
         return loss
 
 
@@ -378,6 +367,23 @@ class LanguageIDModel(Module):
         For more information, look at the pytorch documentation of torch.movedim()
         """
         "*** YOUR CODE HERE ***"
+        dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
+        print(len(dataloader))
+        epoch = 0
+        while True:
+            print(epoch)
+            epoch += 1
+            optimizer = optim.Adam(self.parameters(), lr=0.01)
+            for data in dataloader:
+                input = movedim(data['x'],0,1)
+                optimizer.zero_grad()
+                loss = self.get_loss(input,data['label'])
+                loss.backward()
+                optimizer.step()
+            print(dataset.get_validation_accuracy())
+            if dataset.get_validation_accuracy() >= 0.825:
+                break
+        return
 
         
 
