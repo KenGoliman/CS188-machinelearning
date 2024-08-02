@@ -280,11 +280,10 @@ class LanguageIDModel(Module):
         "*** YOUR CODE HERE ***"
         # Initialize your model parameters here
         self.batch_size = 100
-        self.init_layer = Linear(self.num_chars,self.num_chars)
-        self.proc_layer = Linear(self.num_chars,self.num_chars)
-        self.hid_layer1 = Linear(self.num_chars,self.num_chars * len(self.languages))
-        self.hid_layer2 = Linear(self.num_chars * len(self.languages),self.num_chars * len(self.languages))
-        self.hid_layer3 = Linear(self.num_chars * len(self.languages),len(self.languages))
+        self.init_layer = Linear(self.num_chars,500)
+        self.proc_layer = Linear(500,500)
+        self.hid_layer = Linear(500,500)
+        self.output_layer = Linear(500,len(self.languages))
 
     def run(self, xs):
         """
@@ -321,14 +320,12 @@ class LanguageIDModel(Module):
         length = len(xs) - 1
         while counter <= length:
             if counter == 0:
-                output = relu(self.init_layer(xs[counter]))
+                output = relu(self.proc_layer(relu(self.init_layer(xs[counter]))))
                 counter += 1
             else:
-                output = relu(self.init_layer(xs[counter])) + self.proc_layer(output)
+                output = relu(self.hid_layer(output)) + relu(self.proc_layer(relu(self.init_layer(xs[counter]))))
                 counter += 1
-        step = relu(self.hid_layer1(output))
-        again = relu(self.hid_layer2(step))
-        final = self.hid_layer3(again)
+        final = self.output_layer(output)
         return final
         
     
