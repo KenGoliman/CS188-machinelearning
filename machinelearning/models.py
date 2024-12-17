@@ -279,11 +279,11 @@ class LanguageIDModel(Module):
         super(LanguageIDModel, self).__init__()
         "*** YOUR CODE HERE ***"
         # Initialize your model parameters here
-        self.batch_size = 100
-        self.init_layer = Linear(self.num_chars,500)
-        self.proc_layer = Linear(500,500)
-        self.hid_layer = Linear(500,500)
-        self.output_layer = Linear(500,len(self.languages))
+        self.batch_size = 550
+        self.init_layer = Linear(self.num_chars, self.batch_size)
+        self.proc_layer = Linear(self.batch_size,self.batch_size)
+        self.hid_layer = Linear(self.batch_size,self.batch_size)
+        self.output_layer = Linear(self.batch_size,len(self.languages))
 
     def run(self, xs):
         """
@@ -315,19 +315,17 @@ class LanguageIDModel(Module):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-        output = None
-        counter = 0
-        length = len(xs) - 1
-        while counter <= length:
-            if counter == 0:
-                output = relu(self.proc_layer(relu(self.init_layer(xs[counter]))))
-                counter += 1
+        batch_size = xs[0].shape[0]
+        hidden_state = None
+
+        for i, x in enumerate(xs):
+            if i == 0:
+                hidden_state = relu(self.init_layer(x))
             else:
-                output = relu(self.hid_layer(output)) + relu(self.proc_layer(relu(self.init_layer(xs[counter]))))
-                counter += 1
-        final = self.output_layer(output)
-        return final
-        
+                hidden_state = relu(self.proc_layer(hidden_state + self.init_layer(x)))
+
+        output = self.output_layer(hidden_state)
+        return output
     
     def get_loss(self, xs, y):
         """
@@ -365,22 +363,36 @@ class LanguageIDModel(Module):
         """
         "*** YOUR CODE HERE ***"
         dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
-        print(len(dataloader))
+        optimizer = optim.Adam(self.parameters(), lr=0.001)  # Decreased learning rate for stability
         epoch = 0
+        best_accuracy = 0
+        patience = 5
+        patience_counter = 0
+
         while True:
             print(epoch)
             epoch += 1
-            optimizer = optim.Adam(self.parameters(), lr=0.01)
+            total_loss = 0
             for data in dataloader:
-                input = movedim(data['x'],0,1)
+                input = movedim(data['x'], 0, 1)
                 optimizer.zero_grad()
-                loss = self.get_loss(input,data['label'])
+                loss = self.get_loss(input, data['label'])
                 loss.backward()
                 optimizer.step()
+                total_loss += loss.item()
+
+            avg_loss = total_loss / len(dataloader)
+            validation_accuracy = dataset.get_validation_accuracy()
             print(dataset.get_validation_accuracy())
-            if dataset.get_validation_accuracy() >= 0.825:
+
+            if validation_accuracy > best_accuracy:
+                best_accuracy = validation_accuracy
+                patience_counter = 0
+            else:
+                patience_counter += 1
+
+            if patience_counter >= patience or validation_accuracy >= 0.825:
                 break
-        return
 
         
 
